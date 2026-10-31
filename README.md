@@ -1,7 +1,7 @@
 # ¿Quién protege la memoria?
 
 Laboratorio avanzado comparativo de C, Rust y Java. Trabajo **individual** de
-40 minutos, nivel posgrado.
+40 minutos.
 
 La guía oficial del taller es
 [docs/Taller_Avanzado_Memoria_C_Rust_Java.docx](docs/Taller_Avanzado_Memoria_C_Rust_Java.docx).

@@ -14,7 +14,7 @@ es más rápido". Tabla tomada de la sección 12 del documento del taller.
 
 ## Criterio de profundidad esperado
 
-Una respuesta de nivel posgrado separa:
+Una respuesta completa separa:
 
 1. la propiedad deseada,
 2. el mecanismo que la impone o comprueba,
