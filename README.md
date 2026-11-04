@@ -8,6 +8,21 @@ La guía oficial del taller es
 Es la fuente de verdad: los fragmentos de código, nombres de archivo y comandos
 de este repositorio coinciden con ella.
 
+## Entrega del taller (ldlavado)
+
+Informe completo con predicciones, resultados observados, análisis y conclusión:
+
+- **[Informe](entregas/ldlavado/INFORME.md)**
+- [Checklist](entregas/ldlavado/CHECKLIST.md)
+- Evidencias:
+  - [versions.txt](entregas/ldlavado/EVIDENCIAS/versions.txt)
+  - [m1.txt](entregas/ldlavado/EVIDENCIAS/m1.txt)
+  - [m2.txt](entregas/ldlavado/EVIDENCIAS/m2.txt)
+  - [m3.txt](entregas/ldlavado/EVIDENCIAS/m3.txt)
+  - [minivec-miri-before.txt](entregas/ldlavado/EVIDENCIAS/minivec-miri-before.txt)
+  - [minivec-miri-after.txt](entregas/ldlavado/EVIDENCIAS/minivec-miri-after.txt)
+  - [carrera-dispersion.txt](entregas/ldlavado/EVIDENCIAS/carrera-dispersion.txt)
+
 ## Objetivo
 
 Responder con evidencia observable a la pregunta central:
@@ -77,21 +92,6 @@ make m1 2>&1 | tee entregas/<su-usuario>/EVIDENCIAS/m1.txt
 La entrega debe permitir que otra persona reproduzca el razonamiento: indique
 siempre el comando exacto con el que obtuvo cada resultado.
 
-
-## Entrega del taller (ldlavado)
-
-Informe completo con predicciones, resultados observados, análisis y conclusión:
-
-- **[Informe](entregas/ldlavado/INFORME.md)**
-- [Checklist](entregas/ldlavado/CHECKLIST.md)
-- Evidencias:
-  - [versions.txt](entregas/ldlavado/EVIDENCIAS/versions.txt)
-  - [m1.txt](entregas/ldlavado/EVIDENCIAS/m1.txt)
-  - [m2.txt](entregas/ldlavado/EVIDENCIAS/m2.txt)
-  - [m3.txt](entregas/ldlavado/EVIDENCIAS/m3.txt)
-  - [minivec-miri-before.txt](entregas/ldlavado/EVIDENCIAS/minivec-miri-before.txt)
-  - [minivec-miri-after.txt](entregas/ldlavado/EVIDENCIAS/minivec-miri-after.txt)
-  - [carrera-dispersion.txt](entregas/ldlavado/EVIDENCIAS/carrera-dispersion.txt)
 
 ## Material de apoyo
 
