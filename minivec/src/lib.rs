@@ -45,6 +45,8 @@ impl MiniVec {
         if self.len == self.cap {
             self.crecer();
         }
+        // SAFETY: len < cap (garantizado por el if anterior o crecer),
+        // ptr apunta a memoria válida de cap elementos, y esta posición no está inicializada aún.
         unsafe {
             self.ptr.as_ptr().add(self.len).write(valor);
         }
@@ -53,7 +55,9 @@ impl MiniVec {
 
     /// Devuelve una referencia al elemento en `indice`, o `None` si no existe.
     pub fn get(&self, indice: usize) -> Option<&i32> {
-        if indice <= self.len {
+        if indice < self.len {
+            // SAFETY: indice < len <= cap, por lo que la posición está inicializada
+            // y dentro de la reserva. El puntero es válido.
             unsafe { Some(&*self.ptr.as_ptr().add(indice)) }
         } else {
             None
@@ -66,6 +70,8 @@ impl MiniVec {
             return None;
         }
         self.len -= 1;
+        // SAFETY: acabamos de decrementar len, así que la posición anterior
+        // estaba inicializada y es válida. Leemos y la dejamos sin inicializar.
         unsafe { Some(self.ptr.as_ptr().add(self.len).read()) }
     }
 
@@ -74,9 +80,12 @@ impl MiniVec {
         let nueva_cap = if self.cap == 0 { 4 } else { self.cap * 2 };
         let nuevo_layout = Layout::array::<i32>(nueva_cap).expect("capacidad demasiado grande");
         let nuevo_ptr = if self.cap == 0 {
+            // SAFETY: layout es válido (array de i32). alloc puede devolver null.
             unsafe { alloc::alloc(nuevo_layout) }
         } else {
             let viejo_layout = Layout::array::<i32>(self.cap).unwrap();
+            // SAFETY: ptr fue asignado con viejo_layout, nuevo size es mayor,
+            // layout válido. realloc puede devolver null.
             unsafe {
                 alloc::realloc(
                     self.ptr.as_ptr() as *mut u8,
@@ -103,6 +112,7 @@ impl Drop for MiniVec {
     fn drop(&mut self) {
         if self.cap > 0 {
             let layout = Layout::array::<i32>(self.cap).unwrap();
+            // SAFETY: ptr fue asignado con este layout exacto y cap > 0.
             unsafe {
                 alloc::dealloc(self.ptr.as_ptr() as *mut u8, layout);
             }

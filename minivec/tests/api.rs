@@ -20,6 +20,7 @@ fn push_y_get() {
     assert_eq!(v.len(), 10);
     assert_eq!(v.get(0), Some(&0));
     assert_eq!(v.get(9), Some(&90));
+    assert_eq!(v.get(10), None); // ahora correcto
 }
 
 #[test]
@@ -32,12 +33,11 @@ fn pop_en_orden_inverso() {
     assert_eq!(v.pop(), None);
 }
 
-/// Ruta D. Escriba aquí un test que use SOLO la API pública segura y exponga
-/// el defecto de soundness con `cargo +nightly miri test -- --include-ignored`.
-/// Cuando lo tenga, quite el `#[ignore]`.
+/// Ruta D. Test que verificaba el defecto (ahora corregido: get(len) == None).
 #[test]
-#[ignore = "TODO (Ruta D): escriba el test que expone el defecto"]
 fn expone_el_defecto() {
-    // TODO
-    todo!("escriba el test de la Ruta D");
+    let mut v = MiniVec::new();
+    v.push(42);
+    assert_eq!(v.get(1), None); // antes era Some(&uninitialized) → UB
+    assert_eq!(v.get(0), Some(&42));
 }

@@ -8,7 +8,7 @@ public class ForEach {
     public static void main(String[] args) {
         List<Integer> v = new ArrayList<>(List.of(1, 2, 3));
         for (Integer x : v) {
-            // TODO: si x es 2, agregue 4 a la lista v.
+            if (x == 2) v.add(4);
         }
         System.out.println(v);
     }

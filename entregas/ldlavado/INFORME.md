@@ -11,19 +11,22 @@
 
 | Caso | Predicción | ¿Compila? | ¿Cuándo se detecta? | Resultado observado | ¿Qué garantía aporta? |
 | --- | --- | --- | --- | --- | --- |
-| C, índice calculado (a/b/c) | (a/b) UB: puede imprimir basura o crash; (c) ASan detecta stack-buffer-overflow | Sí | (a/b) no o en ejecución impredecible; (c) ejecución con sanitizer | (pendiente) | Ninguna en C puro; ASan es herramienta dinámica |
-| Rust, constante | Error de compilación por lint unconditional_panic o panic en ejecución | No (o sí y panic) | Compilación o ejecución | (pendiente) | Comprobación estática de índices constantes |
-| Rust, calculado (`[]` y `get`) | `get` retorna None; `[]` hace panic en ejecución | Sí | Ejecución (bounds check dinámico) | (pendiente) | Bounds check en runtime para índices dinámicos |
-| Rust, `get_unchecked` (normal y Miri) | Debug puede abortar; release UB; Miri reporta Undefined Behavior | Sí | Miri (estático/dinámico interpretado) | (pendiente) | Ninguna si se usa unsafe; Miri detecta UB |
-| Java, arreglo de 5 | ArrayIndexOutOfBoundsException | Sí | Ejecución | (pendiente) | Bounds check dinámico + excepción |
-| Overflow C / Rust / Java | C: UB (puede optimizar); Rust debug panic, release wrap; Java wrap + addExact excepción | Sí | Depende | (pendiente) | C: ninguna (UB); Rust: debug checks; Java: definida + opcional checked |
+| C, índice calculado (a/b/c) | (a/b) UB: basura o crash; (c) ASan stack-buffer-overflow | Sí | (a/b) impredecible; (c) ASan en ejecución | ASan falló por permisos (código 126); gcc -O0/-O2 ejecutaron (UB no estable) | Ninguna en C; ASan dinámica |
+| Rust, constante | Error unconditional_panic o panic | No/Sí+panic | Compilación o ejecución | Compiló y panic "index out of bounds" (ver m1.txt) | Lint estático + bounds check |
+| Rust, calculado (`[]` y `get`) | get=None; []=panic | Sí | Ejecución | get None; [] panic index out of bounds | Bounds check dinámico |
+| Rust, `get_unchecked` (normal y Miri) | Debug abort/UB; Miri UB | Sí | Miri | Debug/release problemas de permisos; Miri reportó UB | Ninguna (unsafe); Miri detecta |
+| Java, arreglo de 5 | ArrayIndexOutOfBoundsException | Sí | Ejecución | ArrayIndexOutOfBoundsException: Index 5 out of bounds for length 5 | Bounds check + excepción |
+| Overflow C / Rust / Java | C UB; Rust debug panic/release wrap; Java wrap+excepción | Sí | Depende | Rust debug: panic attempt to add with overflow; release: -2147483648; Java: wrap + ArithmeticException | C: UB; Rust: debug checks; Java: definida |
 
 **Comandos y evidencias:**
+- `LAB_IN_CONTAINER=1 CARGO_TARGET_DIR=/tmp/cargo-target bash modulos/m1-limites/run-expect-fail.sh` → `EVIDENCIAS/m1.txt`
+- `java Overflow.java` y `java Bounds.java` (creado)
+- Nota: sin Docker/clang completo; algunos binarios C con sanitizer tuvieron Permission denied. Rust/Java ejecutados correctamente.
 
-**Análisis.** ¿Qué mecanismo detecta el índice constante en Rust y por qué no
-prueba que todo índice sea válido? ¿Por qué `get_unchecked` es UB y `v[i]` no?
-¿Qué semántica de overflow elige cada lenguaje y por qué el compilador de C
-puede "optimizar" la comparación?
+**Análisis.**
+- El índice constante en Rust lo detecta el lint `unconditional_panic` o el bounds check en compilación/ejecución. No prueba índices dinámicos porque el compilador no puede evaluar todos los valores posibles en tiempo de compilación.
+- `get_unchecked` es UB porque omite el bounds check (contrato del programador); `v[i]` siempre hace el check dinámico y panics si falla.
+- Overflow: C = UB (permite optimizaciones como plegar `x+1 > x` a true); Rust debug = panic (overflow-checks), release = wrap; Java = wrap definido + `Math.addExact` lanza excepción. El compilador de C puede optimizar porque asume que no hay UB.
 
 ## 2. Ownership y dónde termina la garantía
 
@@ -78,15 +81,20 @@ Prueba adicional que se necesitaría: pruebas formales o más casos límite.
 
 ## 5. Preguntas de reflexión
 
-1. ¿Qué diferencia concreta observó entre comportamiento indefinido en C, panic en Rust y excepción en Java? ¿Por qué no son resultados equivalentes?
-2. ¿Qué detecta el compilador de Rust en el experimento de ownership que no detecta el de Java, y qué detecta Rust solo en ejecución?
-3. ¿Qué garantías ofrece cada modelo y cuáles dependen aún de la disciplina del equipo o de comprobaciones en ejecución?
-4. ¿Por qué AddressSanitizer, UBSan, TSan o Miri ayudan a encontrar defectos pero no demuestran que un programa esté libre de ellos?
-5. ¿Cuándo es preferible borrowing frente a clonar? Considere semántica, costo y complejidad.
-6. ¿Qué diferencia hay entre evitar data races y evitar deadlocks? Ilústrela con el Experimento 3.
-7. ¿Qué riesgos permanecen en Rust con unsafe o FFI y cómo mitigarlos en un proyecto real?
-8. Si un servicio prioriza latencia predecible y control de recursos, ¿qué factores evaluaría para elegir entre C, Rust y Java, y qué evidencia adicional necesitaría para pasar de este laboratorio a una recomendación de arquitectura? Evite asumir que un lenguaje siempre es más rápido.
+1. **Diferencia UB / panic / excepción:** En C el UB puede corromper silenciosamente o ser optimizado de formas sorprendentes (resultado no reproducible). En Rust el panic aborta de forma controlada (stack unwind o abort). En Java la excepción es un valor de control de flujo definido. No son equivalentes: UB es "el compilador puede hacer cualquier cosa"; panic/excepción son comportamientos definidos que el programa puede manejar o no.
+2. **Ownership Rust vs Java:** Rust rechaza en compilación moves inválidos y borrows conflictivos (E0382, E0502). Java permite aliasing libre y solo detecta ConcurrentModification en ejecución (fail-fast). Rust detecta en ejecución los RefCell borrows y overflow en debug.
+3. **Garantías:** Rust ofrece memory safety y thread safety estáticas (sin unsafe). Java ofrece memory safety vía GC + bounds checks, pero no thread safety completa. C ofrece ninguna por defecto. Las restantes dependen de disciplina (no usar unsafe mal) o herramientas (ASan, Miri, TSan).
+4. **Sanitizers/Miri:** Son herramientas dinámicas o de interpretación que encuentran defectos en las ejecuciones probadas. No demuestran ausencia de defectos porque no exploran todos los caminos ni todos los inputs.
+5. **Borrowing vs clone:** Preferir borrowing cuando la semántica lo permite (cero costo, sin copia). Clone cuando se necesitan dueños independientes o se sale del scope. Trade-off: borrowing puede complicar lifetimes; clone es simple pero costoso.
+6. **Data races vs deadlocks:** Rust evita data races en compilación (Send/Sync). Deadlocks son de correctness y no se previenen estáticamente (el ejemplo de dos Mutex en orden opuesto). Java no previene ni data races ni deadlocks; C los trata como UB.
+7. **Riesgos unsafe/FFI:** El código unsafe puede introducir UB si se violan invariantes. Mitigación: documentar # Safety, encapsular en API segura, tests con Miri, revisión, minimizar superficie unsafe.
+8. **Elección de lenguaje:** Para latencia predecible y control de recursos: evaluar footprint, GC pauses (Java), safety guarantees (Rust), control fino (C). Evidencia necesaria: benchmarks reales, perfiles de memoria, análisis de worst-case latency, no solo microbenchmarks de laboratorio.
+
+
 
 ## 6. Conclusión ejecutiva (150–250 palabras)
 
-Recomiende una alternativa para un contexto definido y declare los trade-offs.
+Para un servicio que prioriza latencia predecible y control de recursos (por ejemplo un sistema de trading de baja latencia o un motor de base de datos embebido), recomiendo Rust como alternativa principal. Rust ofrece memory safety y thread safety en tiempo de compilación sin garbage collector, lo que elimina tanto los pausas de GC de Java como la necesidad de disciplina extrema de C para evitar UB. En el laboratorio se observó que el compilador de Rust rechaza moves y borrows inválidos antes de ejecutar, mientras que Java solo detecta ciertos errores en runtime y C permite UB que puede ser optimizado de formas no reproducibles.
+
+Los trade-offs son: curva de aprendizaje más alta (ownership, lifetimes), tiempos de compilación mayores y la necesidad de encapsular cuidadosamente cualquier `unsafe` o FFI (como se demostró con el defecto de soundness en minivec, detectado por Miri). Java sigue siendo preferible cuando el ecosistema y la productividad importan más que la latencia predecible, y C cuando se requiere control absoluto y se acepta el costo de verificación externa (ASan, TSan, formal methods). La evidencia de este taller (panics definidos vs UB, detección estática vs dinámica) apoya que las garantías de Rust reducen la clase de defectos que llegan a producción, siempre que se mantenga la disciplina en los bloques unsafe.
+

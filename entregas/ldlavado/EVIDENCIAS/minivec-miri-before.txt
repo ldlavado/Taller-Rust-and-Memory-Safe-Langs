@@ -1,0 +1,67 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.01s
+     Running unittests src/lib.rs (/tmp/cargo-target/miri/x86_64-unknown-linux-gnu/debug/build/minivec/7e4ae82453835d3c/out/minivec-7e4ae82453835d3c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/api.rs (/tmp/cargo-target/miri/x86_64-unknown-linux-gnu/debug/build/minivec/46e229517410f40b/out/api-46e229517410f40b)
+
+running 1 test
+test expone_el_defecto ... error: Undefined Behavior: reading memory at alloc40748[0x4..0x8], but memory is uninitialized at [0x4..0x8], and this operation requires initialized memory
+   --> /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/fmt/num.rs:164:45
+    |
+164 |                     unsafe { f.pad_integral(*self >= 0, "", self.unsigned_abs()._fmt(&mut buf)) }
+    |                                             ^^^^^ Undefined Behavior occurred here
+...
+622 |     impl_Display!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize; as u64 into display_u64);
+    |     ------------------------------------------------------------------------------------------ in this macro invocation
+    |
+    = help: this indicates a bug in the program: it performed an invalid operation, and caused Undefined Behavior
+    = help: see https://doc.rust-lang.org/nightly/reference/behavior-considered-undefined.html for further information
+    = note: this is on thread `expone_el_defec`
+    = note: stack backtrace:
+            0: core::fmt::num::imp::<impl std::fmt::Display for i32>::fmt
+                at /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/fmt/num.rs:164:45: 164:50
+            1: core::fmt::rt::Argument::<'_>::fmt
+                at /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/fmt/rt.rs:152:76: 152:95
+            2: std::fmt::write
+                at /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/fmt/mod.rs:1685:17: 1687:80
+            3: core::io::write::default_write_fmt::<std::vec::Vec<u8>>
+                at /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/io/write.rs:402:11: 402:40
+            4: <std::vec::Vec<u8> as std::io::Write>::write_fmt
+                at /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/io/write.rs:335:13: 335:42
+            5: std::io::stdio::print_to_buffer_if_capture_used::{closure#0}::{closure#0}
+                at /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/io/stdio.rs:1173:25: 1173:84
+            6: std::option::Option::<std::sync::Arc<std::sync::Mutex<std::vec::Vec<u8>>>>::map::<(), {closure@std::io::stdio::print_to_buffer_if_capture_used::{closure#0}::{closure#0}}>
+                at /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:1165:29: 1165:33
+            7: std::io::stdio::print_to_buffer_if_capture_used::{closure#0}
+                at /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/io/stdio.rs:1172:13: 1175:15
+            8: std::thread::LocalKey::<std::cell::Cell<std::option::Option<std::sync::Arc<std::sync::Mutex<std::vec::Vec<u8>>>>>>::try_with::<{closure@std::io::stdio::print_to_buffer_if_capture_used::{closure#0}}, std::option::Option<()>>
+                at /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/thread/local.rs:470:12: 470:27
+            9: std::io::stdio::print_to_buffer_if_capture_used
+                at /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/io/stdio.rs:1168:12: 1176:11
+            10: std::io::stdio::print_to::<std::io::Stdout>
+                at /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/io/stdio.rs:1156:8: 1156:45
+            11: std::io::_print
+                at /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/io/stdio.rs:1269:5: 1269:37
+            12: expone_el_defecto
+                at /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/macros.rs:148:9: 148:62
+            13: expone_el_defecto::{closure#0}
+                at minivec/tests/api.rs:37:23: 37:23
+    = note: this error originates in the macro `impl_Display` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+Uninitialized memory occurred at alloc40748[0x4..0x8], in this allocation:
+alloc40748 (Rust heap, size: 16, align: 4) {
+    2a 00 00 00 __ __ __ __ __ __ __ __ __ __ __ __ │ *...░░░░░░░░░░░░
+}
+
+note: some details are omitted, run with `MIRIFLAGS=-Zmiri-backtrace=full` for a verbose backtrace
+
+error: aborting due to 1 previous error
+
+error: test failed, to rerun pass `--test api`
+
+Caused by:
+  process didn't exit successfully: `/root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/bin/cargo-miri runner /tmp/cargo-target/miri/x86_64-unknown-linux-gnu/debug/build/minivec/46e229517410f40b/out/api-46e229517410f40b --include-ignored expone_el_defecto` (exit status: 1)
+note: test exited abnormally; to see the full output pass --no-capture to the harness.

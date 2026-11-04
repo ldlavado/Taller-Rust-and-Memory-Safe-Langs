@@ -1,0 +1,186 @@
+
+==================== C — índice calculado (compilador: gcc) ====================
+
+--- (a) -O0
+$ gcc -O0 c/indice.c -o /workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/indice_a
+(sin mensajes del compilador)
+
+--- (a) ejecución: UB, resultado NO estable
+$ /workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/indice_a
+timeout: failed to run command ‘/workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/indice_a’: Permission denied
+>> código de salida: 126 (informativo, no se verifica)
+
+--- (b) -O2 -Wall -Wextra
+$ gcc -O2 -Wall -Wextra c/indice.c -o /workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/indice_b
+(sin mensajes del compilador)
+
+--- (b) ejecución: UB, resultado NO estable
+$ /workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/indice_b
+timeout: failed to run command ‘/workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/indice_b’: Permission denied
+>> código de salida: 126 (informativo, no se verifica)
+
+--- (c) -g -O1 -fsanitize=address
+$ gcc -g -O1 -fsanitize=address c/indice.c -o /workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/indice_c
+(sin mensajes del compilador)
+
+--- (c) ejecución con ASan
+$ /workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/indice_c
+timeout: failed to run command ‘/workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/indice_c’: Permission denied
+>> NO ESPERADO: código 126; se esperaba fallo con /stack-buffer-overflow/
+
+==================== C — overflow con INT_MAX y siempre_mayor (gcc y clang) ====================
+
+--- gcc -O0
+$ gcc -O0 c/overflow.c -o /workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/overflow_gcc_O0
+(sin mensajes del compilador)
+
+--- gcc -O0 ejecución: UB
+$ /workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/overflow_gcc_O0
+timeout: failed to run command ‘/workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/overflow_gcc_O0’: Permission denied
+>> código de salida: 126 (informativo, no se verifica)
+
+--- gcc -O2
+$ gcc -O2 c/overflow.c -o /workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/overflow_gcc_O2
+(sin mensajes del compilador)
+
+--- gcc -O2 ejecución: UB (el compilador puede plegar la comparación)
+$ /workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/overflow_gcc_O2
+timeout: failed to run command ‘/workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/overflow_gcc_O2’: Permission denied
+>> código de salida: 126 (informativo, no se verifica)
+
+--- gcc -fsanitize=undefined
+$ gcc -fsanitize=undefined c/overflow.c -o /workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/overflow_gcc_ubsan
+(sin mensajes del compilador)
+
+--- gcc: ejecución con UBSan (gcc ya plegó la comparación: puede no haber reporte)
+$ /workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/overflow_gcc_ubsan
+timeout: failed to run command ‘/workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/overflow_gcc_ubsan’: Permission denied
+>> código de salida: 126 (informativo, no se verifica)
+
+--- clang -O0
+$ clang -O0 c/overflow.c -o /workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/overflow_clang_O0
+/workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/scripts/lib.sh: line 96: clang: command not found
+>> NO ESPERADO: no compiló (código 127)
+
+--- clang -O2
+$ clang -O2 c/overflow.c -o /workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/overflow_clang_O2
+/workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/scripts/lib.sh: line 96: clang: command not found
+>> NO ESPERADO: no compiló (código 127)
+
+--- clang -fsanitize=undefined
+$ clang -fsanitize=undefined c/overflow.c -o /workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/overflow_clang_ubsan
+/workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/scripts/lib.sh: line 96: clang: command not found
+>> NO ESPERADO: no compiló (código 127)
+
+==================== Rust — índice constante (rust_const.rs) ====================
+
+--- compilación
+$ rustc no-compila/rust_const.rs -o /workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/build/m1/rust_const
+error: this operation will panic at runtime
+ --> rust/no-compila/rust_const.rs:8:58
+  |
+8 | fn main() { let v = [10, 20, 30, 40, 50]; println!("{}", v[5]); }
+  |                                                          ^^^^ index out of bounds: the length is 5 but the index is 5
+  |
+  = note: `#[deny(unconditional_panic)]` on by default
+
+error: aborting due to 1 previous error
+>> ESPERADO: rechazado en compilación por el lint unconditional_panic
+
+==================== Rust — índice calculado (rust_dyn.rs) ====================
+
+--- get devuelve None; [] hace panic
+$ cargo run -q --bin rust_dyn
+None
+
+thread 'main' (1198) panicked at modulos/m1-limites/rust/src/bin/rust_dyn.rs:9:21:
+index out of bounds: the len is 5 but the index is 5
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+>> ESPERADO: falló como se esperaba (código 101; coincide /index out of bounds/)
+
+==================== Rust — get_unchecked fuera de rango (unsafe) ====================
+
+--- debug (puede abortar por la comprobación de precondición; depende de la versión)
+$ cargo run -q --bin get_unchecked
+
+thread 'main' (1245) panicked at modulos/m1-limites/rust/src/bin/get_unchecked.rs:9:32:
+unsafe precondition(s) violated: slice::get_unchecked requires that the index is within the slice
+
+This indicates a bug in the program. This Undefined Behavior check is optional, and cannot be relied on for safety.
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+thread caused non-unwinding panic. aborting.
+/workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/scripts/lib.sh: line 32:  1244 Aborted                 timeout "$TIEMPO_LIMITE" "$@" 2>&1
+>> código de salida: 134 (informativo, no se verifica)
+
+--- --release: UB, resultado NO estable
+$ cargo run -q --release --bin get_unchecked
+/workspace/artifacts/Taller-Rust-and-Memory-Safe-Langs/scripts/lib.sh: line 32:  1277 Illegal instruction     timeout "$TIEMPO_LIMITE" "$@" 2>&1
+>> código de salida: 132 (informativo, no se verifica)
+
+--- Miri
+$ cargo +nightly miri run -q --bin get_unchecked
+
+thread 'main' (1000) panicked at modulos/m1-limites/rust/src/bin/get_unchecked.rs:9:32:
+unsafe precondition(s) violated: slice::get_unchecked requires that the index is within the slice
+
+This indicates a bug in the program. This Undefined Behavior check is optional, and cannot be relied on for safety.
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+note: in Miri, you may have to set `MIRIFLAGS=-Zmiri-env-forward=RUST_BACKTRACE` for the environment variable to have an effect
+thread caused non-unwinding panic. aborting.
+error: abnormal termination: the program aborted execution
+   --> /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/panicking.rs:833:9
+    |
+833 |         crate::process::abort();
+    |         ^^^^^^^^^^^^^^^^^^^^^^^ abnormal termination occurred here
+    |
+    = note: stack backtrace:
+            0: std::panicking::panic_with_hook
+                at /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/panicking.rs:833:9: 833:32
+            1: std::panicking::panic_handler::{closure#0}
+                at /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/panicking.rs:678:13: 683:14
+            2: std::sys::backtrace::__rust_end_short_backtrace::<{closure@std::panicking::panic_handler::{closure#0}}, !>
+                at /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/sys/backtrace.rs:182:18: 182:21
+            3: std::panicking::panic_handler
+                at /root/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/panicking.rs:676:5: 692:7
+            4: main
+                at modulos/m1-limites/rust/src/bin/get_unchecked.rs:9:30: 9:48
+
+note: some details are omitted, run with `MIRIFLAGS=-Zmiri-backtrace=full` for a verbose backtrace
+
+error: aborting due to 1 previous error
+>> ESPERADO: falló como se esperaba (código 1; coincide /Undefined Behavior/)
+
+==================== Rust — overflow ====================
+
+--- debug
+$ cargo run -q --bin overflow
+
+thread 'main' (1333) panicked at modulos/m1-limites/rust/src/bin/overflow.rs:6:20:
+attempt to add with overflow
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+>> ESPERADO: falló como se esperaba (código 101; coincide /attempt to add with overflow/)
+
+--- --release: envuelve (overflow-checks desactivado)
+$ cargo run -q --release --bin overflow
+-2147483648
+>> código de salida: 0 (informativo, no se verifica)
+
+==================== Java — overflow ====================
+
+--- Overflow.java
+$ java Overflow.java
+-2147483648
+Exception in thread "main" java.lang.ArithmeticException: integer overflow
+	at java.base/java.lang.Math.addExact(Math.java:883)
+	at Overflow.main(Overflow.java:7)
+>> ESPERADO: falló como se esperaba (código 1; coincide /ArithmeticException/)
+
+==================== Java — arreglo de cinco (Bounds.java, lo escribe el estudiante) ====================
+
+--- Bounds.java
+$ java Bounds.java
+Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: Index 5 out of bounds for length 5
+	at Bounds.main(Bounds.java:6)
+>> ESPERADO: falló como se esperaba (código 1; coincide /ArrayIndexOutOfBoundsException/)
+
+RESUMEN: 4 caso(s) NO se comportaron como se esperaba.
