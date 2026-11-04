@@ -8,7 +8,7 @@ La guía oficial del taller es
 Es la fuente de verdad: los fragmentos de código, nombres de archivo y comandos
 de este repositorio coinciden con ella.
 
-## Entrega del taller (ldlavado)
+## Entrega del taller
 
 Informe completo con predicciones, resultados observados, análisis y conclusión:
 
